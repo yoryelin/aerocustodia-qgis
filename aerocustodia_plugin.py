@@ -1,8 +1,16 @@
 import json
 import urllib.request
 import urllib.error
+import urllib.parse
 import tempfile
 import os
+
+def _validate_safe_url(target_url):
+    """Verifica que la URL use unicamente esquemas http o https seguros."""
+    parsed = urllib.parse.urlparse(target_url)
+    if parsed.scheme not in ('http', 'https'):
+        raise ValueError(f"Esquema de URL no permitido: {parsed.scheme}")
+    return target_url
 from qgis.PyQt.QtCore import Qt, QDate
 from qgis.PyQt.QtWidgets import (
     QAction, QMessageBox, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
@@ -234,12 +242,13 @@ class AeroCustodiaPlugin:
                     payload["end_date"] = self.date_end.date().toString("yyyy-MM-dd")
         
             try:
+                _validate_safe_url(url)
                 headers = {
                     'Content-Type': 'application/json',
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AeroCustodia-QGIS/1.0'
                 }
                 req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers)
-                response = urllib.request.urlopen(req, timeout=30)
+                response = urllib.request.urlopen(req, timeout=30)  # nosec B310
                 result = json.loads(response.read().decode('utf-8'))
             
                 download_url = result.get('download_url')
@@ -253,7 +262,8 @@ class AeroCustodiaPlugin:
                 temp_dir = tempfile.gettempdir()
                 tif_filename = f"aerocustodia_{analysis_type}.tif"
                 tif_path = os.path.join(temp_dir, tif_filename)
-                urllib.request.urlretrieve(download_url, tif_path)
+                _validate_safe_url(download_url)
+                urllib.request.urlretrieve(download_url, tif_path)  # nosec B310
             
                 layer_name = f"AeroCustodia - {self.cmb_tipo.currentText()}"
                 raster_layer = self.iface.addRasterLayer(tif_path, layer_name)
@@ -355,8 +365,8 @@ class AeroCustodiaPlugin:
                 error_data = {}
                 try:
                     error_data = json.loads(e.read().decode('utf-8'))
-                except:
-                    pass
+                except Exception as parse_err:
+                    error_data = {'message': f'HTTP Error {e.code}: {str(parse_err)}'}
             
                 msg = error_data.get('message', 'Error desconocido del servidor.')
             
@@ -393,13 +403,14 @@ class AeroCustodiaPlugin:
             self.lbl_status.setText("🌤 Consultando Clima en el servidor...")
             
             url = "https://www.aerocustodia.com.ar/auditoria/api/qgis/clima/"
+            _validate_safe_url(url)
             data = json.dumps({'lat': lat, 'lon': lon}).encode('utf-8')
             headers = {
                 'Content-Type': 'application/json',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AeroCustodia-QGIS/1.0'
             }
             req = urllib.request.Request(url, data=data, headers=headers)
-            with urllib.request.urlopen(req, timeout=15) as response:
+            with urllib.request.urlopen(req, timeout=15) as response:  # nosec B310
                 if response.status == 200:
                     resp_data = json.loads(response.read().decode())
                     
@@ -648,8 +659,8 @@ class AeroCustodiaPlugin:
             settings.appendGeoreference = True
             try:
                 settings.exportFlags = QgsLayoutExporter.FlagIncludeGeoPdfFeatures
-            except Exception:
-                pass
+            except (AttributeError, Exception) as flag_err:
+                settings.appendGeoreference = True
 
             exporter = QgsLayoutExporter(layout)
             res = exporter.exportToPdf(file_path, settings)
