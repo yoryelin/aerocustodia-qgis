@@ -11,12 +11,12 @@ def _validate_safe_url(target_url):
     if parsed.scheme not in ('http', 'https'):
         raise ValueError(f"Esquema de URL no permitido: {parsed.scheme}")
     return target_url
-from qgis.PyQt.QtCore import Qt, QDate
+from qgis.PyQt.QtCore import Qt, QDate, QUrl
 from qgis.PyQt.QtWidgets import (
     QAction, QMessageBox, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
     QPushButton, QDockWidget, QWidget, QComboBox, QDateEdit, QFileDialog, QDialog
 )
-from qgis.PyQt.QtGui import QIcon, QFont
+from qgis.PyQt.QtGui import QIcon, QFont, QDesktopServices
 class RadarDialog(QDialog):
     def __init__(self, parent, nivel, titulo, descripcion):
         super().__init__(parent)
@@ -74,6 +74,11 @@ class AeroCustodiaPlugin:
         self.iface.addToolBarIcon(self.action)
         self.iface.addPluginToMenu('&AeroCustodia', self.action)
 
+
+    def _abrir_registro(self):
+        safe_url = _validate_safe_url("https://www.aerocustodia.com.ar/registro/")
+        QDesktopServices.openUrl(QUrl(safe_url))
+
     def unload(self):
         self.iface.removeToolBarIcon(self.action)
         self.iface.removePluginMenu('&AeroCustodia', self.action)
@@ -89,6 +94,14 @@ class AeroCustodiaPlugin:
             self.txt_api = QLineEdit()
             self.txt_api.setPlaceholderText("Ej: ac_live_123456789")
             self.txt_api.setEchoMode(QLineEdit.Password)
+            
+            self.btn_get_key = QPushButton("🎁 ¿No tenés API Key? Obtené 10 créditos gratis")
+            self.btn_get_key.setStyleSheet(
+                "background-color: transparent; color: #00ff88; border: 1px dashed #00ff88; "
+                "font-size: 11px; font-weight: bold; padding: 5px; border-radius: 4px; text-align: center;"
+            )
+            self.btn_get_key.setToolTip("Abre aerocustodia.com.ar para registrarte gratis y recibir 10 créditos de bienvenida.")
+            self.btn_get_key.clicked.connect(self._abrir_registro)
             
             lbl_tipo = QLabel("Tipo de Auditoría:")
             self.cmb_tipo = QComboBox()
@@ -146,6 +159,7 @@ class AeroCustodiaPlugin:
             layout = QVBoxLayout()
             layout.addWidget(lbl_api)
             layout.addWidget(self.txt_api)
+            layout.addWidget(self.btn_get_key)
             layout.addSpacing(10)
             layout.addWidget(lbl_tipo)
             layout.addWidget(self.cmb_tipo)
@@ -172,7 +186,16 @@ class AeroCustodiaPlugin:
             tipo_audit_early = self.cmb_tipo.currentData()
             api_key = self.txt_api.text()
             if not api_key and tipo_audit_early != "clima":
-                QMessageBox.warning(self.iface.mainWindow(), "AeroCustodia - Error", "⚠️ Debe ingresar una API Key válida para utilizar el servicio.")
+                reply = QMessageBox.question(
+                    self.iface.mainWindow(),
+                    "AeroCustodia - Se requiere API Key",
+                    "Para realizar análisis satelitales en la nube se requiere una API Key.\n\n"
+                    "¿Desea abrir aerocustodia.com.ar para registrarse y obtener 10 créditos gratuitos de bienvenida?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.Yes
+                )
+                if reply == QMessageBox.Yes:
+                    self._abrir_registro()
                 return
             
             layer = self.iface.activeLayer()

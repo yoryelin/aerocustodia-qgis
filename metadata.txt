@@ -4,7 +4,7 @@ qgisMinimumVersion=3.16
 qgisMaximumVersion=3.99
 description=Satellite crop monitoring, calibrated NDVI, DEM elevation, EUDR compliance and 1-click GeoPDF export for FO Maps and Avenza.
 about=Official AeroCustodia plugin for QGIS. Fast automated cloud-free Sentinel-2 NDVI, SRTM elevation, EUDR deforestation compliance and 1-click interactive GeoPDF maps with offline GPS tracking for FO Maps and Avenza Maps.
-version=1.2.1
+version=1.2.2
 author=Jorge Daniel - AeroCustodia
 email=aerocustodia@gmail.com
 homepage=https://www.aerocustodia.com.ar
@@ -15,3 +15,5 @@ category=Raster
 icon=icon.png
 experimental=False
 deprecated=False
+
+changelog=v1.2.2: Added 1-click button to get 10 free trial credits on aerocustodia.com.ar
