@@ -16,7 +16,7 @@ from qgis.PyQt.QtWidgets import (
     QAction, QMessageBox, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
     QPushButton, QDockWidget, QWidget, QComboBox, QDateEdit, QFileDialog, QDialog
 )
-from qgis.PyQt.QtGui import QIcon, QFont, QDesktopServices
+from qgis.PyQt.QtGui import QIcon, QFont, QDesktopServices, QColor
 class RadarDialog(QDialog):
     def __init__(self, parent, nivel, titulo, descripcion):
         super().__init__(parent)
@@ -302,8 +302,7 @@ class AeroCustodiaPlugin:
 
                     # --- CARTOGRAFIA DINAMICA ---
                     from qgis.core import QgsColorRampShader, QgsRasterShader, QgsSingleBandPseudoColorRenderer, QgsRasterBandStats
-                    from PyQt5.QtGui import QColor
-
+                    
                     # Forzamos calculo de estadisticas para obtener Min/Max reales de este raster
                     provider = raster_layer.dataProvider()
                     stats = provider.bandStatistics(1, QgsRasterBandStats.All)
@@ -466,8 +465,7 @@ class AeroCustodiaPlugin:
             QMessageBox.warning(self.iface.mainWindow(), "Error", str(e))
     def generar_layout(self, raster_layer, vector_layer, analysis_type):
         from qgis.core import QgsProject, QgsPrintLayout, QgsLayoutItemMap, QgsLayoutItemLabel, QgsLayoutItemLegend, QgsLayoutPoint, QgsLayoutSize
-        from PyQt5.QtGui import QFont
-        
+                
         project = QgsProject.instance()
         manager = project.layoutManager()
         
