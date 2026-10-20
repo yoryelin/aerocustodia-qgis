@@ -282,13 +282,19 @@ class AeroCustodiaPlugin:
                 
                 self.lbl_status.setText("📥 Descargando archivo GeoTIFF crudo...")
             
-                temp_dir = tempfile.gettempdir()
-                tif_filename = f"aerocustodia_{analysis_type}.tif"
-                tif_path = os.path.join(temp_dir, tif_filename)
+                import datetime
+                docs_dir = os.path.join(os.path.expanduser('~'), 'Documents', 'AeroCustodia_Capas')
+                if not os.path.exists(os.path.join(os.path.expanduser('~'), 'Documents')):
+                    docs_dir = os.path.join(os.path.expanduser('~'), 'AeroCustodia_Capas')
+                os.makedirs(docs_dir, exist_ok=True)
+                
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                tif_filename = f"aerocustodia_{analysis_type}_{timestamp}.tif"
+                tif_path = os.path.join(docs_dir, tif_filename)
                 _validate_safe_url(download_url)
                 urllib.request.urlretrieve(download_url, tif_path)  # nosec B310
             
-                layer_name = f"AeroCustodia - {self.cmb_tipo.currentText()}"
+                layer_name = f"AeroCustodia - {self.cmb_tipo.currentText()} ({timestamp[:8]})"
                 raster_layer = self.iface.addRasterLayer(tif_path, layer_name)
             
                 if raster_layer and raster_layer.isValid():
